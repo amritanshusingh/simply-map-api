@@ -5,8 +5,13 @@ from typing import Optional
 router = APIRouter()
 
 @router.post("/buffer")
-async def generate_buffer(file: UploadFile = File(...), distance: float = Query(...), mode: Optional[str] = Query(None)):
-    return generate_ops.generate_buffer(await file.read(), distance, mode)
+async def generate_buffer(
+    file: UploadFile = File(...),
+    distance: float = Query(...),
+    mode: Optional[str] = Query(None),
+    fileDownload: Optional[str] = Query(None)
+):
+    return generate_ops.generate_buffer(await file.read(), distance, mode, fileDownload)
 
 @router.post("/square-grid")
 async def square_grid(file: UploadFile = File(...), cell_size: float = Query(...), mode: Optional[str] = Query(None)):
