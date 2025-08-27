@@ -5,8 +5,12 @@ from typing import Optional
 router = APIRouter()
 
 @router.post("/kml-to-shapefile")
-async def kml_to_shapefile(file: UploadFile = File(...), mode: Optional[str] = Query(None)):
-    return vector_ops.convert_kml_to_shapefile(await file.read(), mode)
+async def kml_to_shapefile(
+    file: UploadFile = File(...),
+    mode: Optional[str] = Query(None),
+    fileDownload: Optional[str] = Query(None)
+):
+    return vector_ops.convert_kml_to_shapefile(await file.read(), mode, fileDownload)
 
 @router.post("/shapefile-to-kml")
 async def shapefile_to_kml(file: UploadFile = File(...), mode: Optional[str] = Query(None)):
