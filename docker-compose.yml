@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    image: simplymap-api
+    container_name: simplymap_api_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MODE=DEV
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7.2
+    container_name: simplymap_api_redis
+    ports:
+      - "6379:6379"

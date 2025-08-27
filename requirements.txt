@@ -1,0 +1,11 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.0
+gunicorn==22.0.0
+pydantic==2.8.0
+shapely==2.0.4
+fiona==1.9.6
+rasterio==1.3.9
+geopandas==1.0.1
+celery==5.3.6
+redis==5.0.4
+python-multipart==0.0.9
