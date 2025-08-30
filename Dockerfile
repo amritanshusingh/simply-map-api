@@ -1,17 +1,14 @@
-FROM python:3.11-slim-bullseye
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y \
-    gdal-bin \
-    libgdal-dev \
-    libspatialindex-dev \
-    libproj-dev \
-    gcc g++ make \
-    && rm -rf /var/lib/apt/lists/*
-
+FROM ghcr.io/osgeo/gdal:ubuntu-full-latest
+ENV PYTHONUNBUFFERED=1
 WORKDIR /app
+
+
+# Install pip and Python dependencies
+RUN apt-get update && apt-get install -y python3-pip && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+
+# Copy app code
 COPY . .
 
 EXPOSE 8000

@@ -22,8 +22,12 @@ async def points_grid(file: UploadFile = File(...), cell_size: float = Query(...
     return generate_ops.generate_points_grid(await file.read(), cell_size, mode)
 
 @router.post("/outer-most-boundary")
-async def outer_most_boundary(file: UploadFile = File(...), mode: Optional[str] = Query(None)):
-    return generate_ops.generate_outer_most_boundary(await file.read(), mode)
+async def outer_most_boundary(
+    file: UploadFile = File(...),
+    mode: Optional[str] = Query(None),
+    fileDownload: Optional[str] = Query(None)
+):
+    return generate_ops.generate_outer_most_boundary(await file.read(), mode, fileDownload)
 
 @router.post("/digital-elevation-model")
 async def digital_elevation_model(file: UploadFile = File(...), mode: Optional[str] = Query(None)):
