@@ -30,8 +30,13 @@ async def outer_most_boundary(
     return generate_ops.generate_outer_most_boundary(await file.read(), mode, fileDownload)
 
 @router.post("/digital-elevation-model")
-async def digital_elevation_model(file: UploadFile = File(...), mode: Optional[str] = Query(None)):
-    return generate_ops.generate_digital_elevation_model(await file.read(), mode)
+async def digital_elevation_model(
+    file: UploadFile = File(...),
+    mode: Optional[str] = Query(None),
+    api_key: Optional[str] = Query(None),
+    fileDownload: Optional[str] = Query(None)
+):
+    return generate_ops.generate_digital_elevation_model(await file.read(), mode, api_key, fileDownload)
 
 @router.post("/contours")
 async def generate_contours(file: UploadFile = File(...), interval: float = Query(...), mode: Optional[str] = Query(None)):

@@ -157,9 +157,75 @@ def generate_outer_most_boundary(file_bytes: bytes, mode=None, fileDownload: str
         return {"status": "ok", "coord_count": len(clean_coords), "hull_type": hull.geom_type, "geojson": json.loads(geojson)}
     return {"status": "ok", "geojson": geojson}
 
-def generate_digital_elevation_model(file_bytes: bytes, mode=None):
-    # TODO: generate DEM (async)
-    return {"status": "ok", "raster": {}}
+def generate_digital_elevation_model(file_bytes: bytes, mode=None, api_key=None, fileDownload: str = None):
+    import geopandas as gpd
+    import tempfile
+    import os
+    import requests
+    from fastapi.responses import FileResponse
+    import logging
+    from dotenv import load_dotenv
+
+    # Load environment variables from .env if present
+    load_dotenv()
+    FALLBACK_API_KEY = os.getenv("OPENTOPOGRAPHY_API_KEY")
+    if not api_key and not FALLBACK_API_KEY:
+        raise ValueError("No OpenTopography API key provided. Please set OPENTOPOGRAPHY_API_KEY in your .env file or supply an api_key.")
+    API_KEY = api_key if api_key else FALLBACK_API_KEY
+
+    try:
+        # Step 1: Read KML file from bytes
+        with tempfile.NamedTemporaryFile(suffix='.kml', delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp.flush()
+            kml_path = tmp.name
+        try:
+            gdf = gpd.read_file(kml_path, driver='KML')
+        finally:
+            os.unlink(kml_path)
+
+        # Step 2: Reproject to EPSG:4326 if needed
+        if gdf.crs is None or gdf.crs.to_epsg() != 4326:
+            gdf = gdf.to_crs(epsg=4326)
+
+        # Step 3: Calculate bounding box
+        bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
+
+        # Step 4: Prepare API call
+        api_url = "https://portal.opentopography.org/API/globaldem"
+        params = {
+            "demtype": "COP30",
+            "south": bounds[1],
+            "north": bounds[3],
+            "west": bounds[0],
+            "east": bounds[2],
+            "outputFormat": "GTiff",
+            "API_Key": API_KEY
+        }
+
+        # Step 5: Make API call
+        response = requests.get(api_url, params=params, stream=True)
+        if response.status_code != 200:
+            raise ValueError(f"Failed to fetch DEM: {response.text}")
+
+        # Step 6: Save DEM to temp file
+        with tempfile.NamedTemporaryFile(suffix='.tif', delete=False) as dem_file:
+            for chunk in response.iter_content(chunk_size=8192):
+                dem_file.write(chunk)
+            dem_file.flush()
+            dem_path = dem_file.name
+
+        # Step 7: Return file or path
+        if fileDownload and str(fileDownload).upper() == 'YES':
+            return FileResponse(dem_path, filename='dem_cop30.tif', media_type='image/tiff')
+        else:
+            # Optionally, you could return a raster summary or path
+            return {"status": "ok", "dem_path": dem_path}
+    except Exception as e:
+        logging.exception("DEM generation failed")
+        if mode == 'DEV':
+            return {"status": "error", "detail": str(e)}
+        return {"status": "error", "detail": "Failed to generate DEM."}
 
 def generate_contours(file_bytes: bytes, interval: float, mode=None):
     # TODO: generate contours
